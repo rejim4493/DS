@@ -1,5 +1,13 @@
 # 自學資源
 操作git與上傳github<br>
+
+上傳到Github的流程是  
+先按ctrl + S  
+git add .  
+git commit -m "簡述"  
+git push  
+
+
 ##程式與網頁開發者必備技能！Git 和 GitHub 零基礎快速上手，輕鬆掌握版本控制的要訣！  
 如何安裝與git的帳號資訊  
 URL：https://youtu.be/FKXRiAiQFiY?si=neu3tstEoOt0XMo0  
@@ -49,8 +57,5 @@ git remote add <> <URL> \\遠端；新增；遠端資料庫名稱；網址
 git branch -M main \\分支管理；重新命名；新的分支名  
 git push -u origin main \\推送；建立關聯；遠端名稱；本地名稱  
   
-流程是  
-git add .  
-git commit -m "簡述"  
-git push  
+
 
