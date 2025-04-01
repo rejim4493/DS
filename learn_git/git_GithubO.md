@@ -1,5 +1,6 @@
 # 自學資源
-1.程式與網頁開發者必備技能！Git 和 GitHub 零基礎快速上手，輕鬆掌握版本控制的要訣！  
+操作git與上傳github<br>
+##程式與網頁開發者必備技能！Git 和 GitHub 零基礎快速上手，輕鬆掌握版本控制的要訣！  
 如何安裝與git的帳號資訊  
 URL：https://youtu.be/FKXRiAiQFiY?si=neu3tstEoOt0XMo0  
   
