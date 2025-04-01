@@ -58,4 +58,22 @@ git branch -M main \\分支管理；重新命名；新的分支名
 git push -u origin main \\推送；建立關聯；遠端名稱；本地名稱  
   
 
+加入協作者..12:10
 
+git pull \\把更新拉回本地端
+
+git checkout -b branch2 \\切換分支；建立並切換至新分支；新分支名稱
+
+更新完後，一樣add.和commit
+再push origin branch2 \\推送；遠端名稱；本地名稱
+
+可以回github上查看分支修改的內容，並
+
+點擊merge pull request，把分支的變更合併到main主分支
+完成後即可刪除分支
+
+回到本地端則要git pull 下載最新的變更
+
+
+2.git教學
+URL：https://github.com/twtrubiks/Git-Tutorials
