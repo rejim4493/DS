@@ -1,0 +1,82 @@
+diff --git a/kernel/exec.c b/kernel/exec.c
+index e18bbb6..599c6b0 100644
+--- a/kernel/exec.c
++++ b/kernel/exec.c
+@@ -8,6 +8,7 @@
+ #include "elf.h"
+ 
+ static int loadseg(pde_t *, uint64, struct inode *, uint, uint);
++extern struct proc *initproc;
+ 
+ int flags2perm(int flags)
+ {
+@@ -91,6 +92,13 @@ exec(char *path, char **argv)
+   for(argc = 0; argv[argc]; argc++) {
+     if(argc >= MAXARG)
+       goto bad;
++    if (!argv[argc+1]) { // i.e., it is the last argument
++      if (argv[argc][0] == '&') { // is background process
++	      //printf("bg_process --- reparent it to init\n");
++	      p->parent = initproc;
++	      break;
++      }
++    }
+     sp -= strlen(argv[argc]) + 1;
+     sp -= sp % 16; // riscv sp must be 16-byte aligned
+     if(sp < stackbase)
+diff --git a/kernel/proc.c b/kernel/proc.c
+index 959b778..3f1cad3 100644
+--- a/kernel/proc.c
++++ b/kernel/proc.c
+@@ -367,6 +367,10 @@ exit(int status)
+ 
+   acquire(&wait_lock);
+ 
++  if (p->parent == initproc)
++  {
++	  printf("%d Done\t\t%s\n", p->pid, p->name);
++  }
+   // Give any children to init.
+   reparent(p);
+ 
+diff --git a/user/sh.c b/user/sh.c
+index 836ebcb..af2f5cf 100644
+--- a/user/sh.c
++++ b/user/sh.c
+@@ -10,6 +10,7 @@
+ #define PIPE  3
+ #define LIST  4
+ #define BACK  5
++#define EXEC_REPARENT  6
+ 
+ #define MAXARGS 10
+ 
+@@ -80,6 +81,20 @@ runcmd(struct cmd *cmd)
+     fprintf(2, "exec %s failed\n", ecmd->argv[0]);
+     break;
+ 
++  case EXEC_REPARENT:
++    //fprintf(1, "exec_reparent\n");
++    ecmd = (struct execcmd*)cmd;
++    uint64 index = 0;
++    for(index = 0; ecmd->argv[index]; index++) {
++      ;
++    }
++    ecmd->argv[index] = "&";
++    if(ecmd->argv[0] == 0)
++      exit(1);
++    exec(ecmd->argv[0], ecmd->argv);
++    fprintf(2, "exec %s failed\n", ecmd->argv[0]);
++    break;
++
+   case REDIR:
+     rcmd = (struct redircmd*)cmd;
+     close(rcmd->fd);
+@@ -124,6 +139,7 @@ runcmd(struct cmd *cmd)
+ 
+   case BACK:
+     bcmd = (struct backcmd*)cmd;
++    bcmd->cmd->type = EXEC_REPARENT;
+     if(fork1() == 0)
+       runcmd(bcmd->cmd);
+     break;

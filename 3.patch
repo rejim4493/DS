@@ -1,0 +1,14 @@
+diff --git a/kernel/proc.c b/kernel/proc.c
+index 959b778..1486f16 100644
+--- a/kernel/proc.c
++++ b/kernel/proc.c
+@@ -367,6 +367,9 @@ exit(int status)
+
+   acquire(&wait_lock);
+
++  if (p->parent == initproc)
++    printf("%d Done\t\t%s\n", p->pid, p->name);
++
+   // Give any children to init.
+   reparent(p);
+
