@@ -1,0 +1,11 @@
+#include <stdio.h>
+
+int main()
+{
+    int a = 0, b = 0, tot = 0;
+    scanf("%d%d", &a, &b);
+    tot = (b*(b+1)*(2*b+1))/6-((a-1)*(a)*(2*(a-1)+1))/6;
+    printf("%d", tot);
+
+    return 0;
+}
