@@ -1,3 +1,4 @@
+//作法一
 #include <stdio.h>
 
 #define MAX_degree 101 /*MAX degree of polynomial+1*/
@@ -27,10 +28,13 @@ int main()
 }
 
 /*
+av：容易實作
+da：當多項式稀疏時浪費空間
 這段程式中，我們創建了一個 Polynomial poly; 物件，並且使用 poly.degree 和 poly.coef[n] 來操作多項式的次數和係數，並且直接在 main 函數中使用，不需要再次指定它們的型別。
 1.poly 是 Polynomial 類型的變數。
 2.degree 和 coef 是 Polynomial 結構體裡面的成員（成員變數）。
 3.當你創建了 poly 這個變數時，degree 和 coef 已經是 poly 這個物件的一部分，並且它們的型別已經被指定（int 和 float[MAX_degree]）。
 4.你可以直接使用 poly.degree 和 poly.coef[n] 來訪問和操作它們，而不需要重新宣告變數型別。
 */
+
 
