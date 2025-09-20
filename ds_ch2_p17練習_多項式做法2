@@ -1,0 +1,225 @@
+/*
+A(x) = 2x^1000+10x^4-3x^2  
+B(x) = x^6-10x^3+3x^2+4  
+*/
+#include <stdio.h>
+
+#define MAX_TERMS 100 /* size of terms array */
+
+typedef struct {
+    float coef; /* 系数 */
+    int expon;  /* 指数 */
+} polynomial;
+
+polynomial terms[MAX_TERMS];
+int avail = 0;
+
+/* 添加多项式项 */
+void attach(float coefficient, int exponent) {
+    if (avail < MAX_TERMS) {
+        terms[avail].coef = coefficient;
+        terms[avail].expon = exponent;
+        avail++;
+    } else {
+        printf("Exceeded MAX_TERMS limit\n");
+    }
+}//確保不會向terms添加超過MAX_TERMS個元素。
+
+/* 相加多项式 */
+void add_polynomials(polynomial A[], int A_size, polynomial B[], int B_size) {//A[],3,b[],4
+    int i = 0, j = 0;
+    while (i < A_size && j < B_size) {
+        if (A[i].expon > B[j].expon) {
+            attach(A[i].coef, A[i].expon);
+            i++;
+        } else if (A[i].expon < B[j].expon) {
+            attach(B[j].coef, B[j].expon);
+            j++;
+        } else { // A[i].expon == B[j].expon
+            float sum_coef = A[i].coef + B[j].coef;
+            if (sum_coef != 0) { // 如果系数不为0才添加
+                attach(sum_coef, A[i].expon);
+            }
+            i++;
+            j++;
+        }
+    }
+
+    // 处理剩余的项
+    while (i < A_size) {
+        attach(A[i].coef, A[i].expon);
+        i++;
+    }
+    while (j < B_size) {
+        attach(B[j].coef, B[j].expon);
+        j++;
+    }
+}
+
+/* 打印多项式 */
+void print_polynomial() {
+    for (int i = 0; i < avail; i++) {
+        printf("%fx^%d ", terms[i].coef, terms[i].expon);
+        if (i < avail - 1) {
+            printf("+ ");
+        }
+    }
+    printf("\n");
+}
+
+int main() {
+    /* A(x) = 2x^1000 + 10x^4 - 3x^2 */
+    polynomial A[] = {
+        {2, 1000},
+        {10, 4},
+        {-3, 2}
+    };
+    int A_size = sizeof(A) / sizeof(A[0]);//6/2=3
+
+    /* B(x) = x^6 - 10x^3 + 3x^2 + 4 */
+    polynomial B[] = {
+        {1, 6},
+        {-10, 3},
+        {3, 2},
+        {4, 0}
+    };
+    int B_size = sizeof(B) / sizeof(B[0]);//8/2=4
+
+    add_polynomials(A, A_size, B, B_size);
+    printf("Sum of A(x) and B(x): ");
+    print_polynomial();
+
+    return 0;
+}
+
+
+/*
+好的，我会详细讲解整个程序的执行步骤。这个程序的目的是对两个多项式进行相加，然后输出结果。我们先从整个程序的执行流程开始，然后一步一步详细说明。
+
+### 程序的执行步骤
+
+1. **程序启动**：
+
+   * 当你运行这个程序时，操作系统会调用 `main()` 函数，这是所有 C 程序的入口。
+   * 程序从 `main()` 函数开始执行。
+
+2. **初始化多项式 A(x)**：
+
+   ```c
+   polynomial A[] = { {2, 1000}, {10, 4}, {-3, 2} };
+   ```
+
+   * 这行代码创建了一个数组 `A[]`，它表示多项式 $A(x) = 2x^{1000} + 10x^4 - 3x^2$。
+   * 数组 `A[]` 包含三个元素，每个元素是一个 `polynomial` 结构体。每个结构体有两个字段：`coef` 和 `expon`，分别表示多项式项的系数和指数。
+
+     * 第一项是 `2x^{1000}`，即 `{2, 1000}`。
+     * 第二项是 `10x^4`，即 `{10, 4}`。
+     * 第三项是 `-3x^2`，即 `{-3, 2}`。
+
+3. **计算多项式 A(x) 的大小**：
+
+   ```c
+   int A_size = sizeof(A) / sizeof(A[0]);
+   ```
+
+   * `sizeof(A)` 计算整个数组 `A` 占用的内存字节数。
+   * `sizeof(A[0])` 计算数组 `A` 中每个元素（即 `polynomial` 结构体）占用的字节数。
+   * `sizeof(A) / sizeof(A[0])` 就是计算数组中有多少个元素。这个值存储在 `A_size` 中，表示 $A(x)$ 有 3 项。
+
+4. **初始化多项式 B(x)**：
+
+   ```c
+   polynomial B[] = { {1, 6}, {-10, 3}, {3, 2}, {4, 0} };
+   ```
+
+   * 这行代码创建了一个数组 `B[]`，它表示多项式 $B(x) = x^6 - 10x^3 + 3x^2 + 4$。
+   * 数组 `B[]` 也包含四个元素，每个元素是一个 `polynomial` 结构体。
+
+     * 第一项是 `x^6`，即 `{1, 6}`。
+     * 第二项是 `-10x^3`，即 `{-10, 3}`。
+     * 第三项是 `3x^2`，即 `{3, 2}`。
+     * 第四项是常数项 `4`，即 `{4, 0}`。
+
+5. **计算多项式 B(x) 的大小**：
+
+   ```c
+   int B_size = sizeof(B) / sizeof(B[0]);
+   ```
+
+   * 和上面一样，`sizeof(B) / sizeof(B[0])` 计算数组 `B[]` 中的元素个数，即 $B(x)$ 中的项数。这个值存储在 `B_size` 中，表示 $B(x)$ 有 4 项。
+
+6. **调用 `add_polynomials` 函数来相加两个多项式**：
+
+   ```c
+   add_polynomials(A, A_size, B, B_size);
+   ```
+
+   * 这行代码将多项式 $A(x)$ 和 $B(x)$ 传递给 `add_polynomials` 函数，进行相加操作。
+   * 传递给 `add_polynomials` 的参数是：
+
+     * `A`：多项式 $A(x)$ 的数组。
+     * `A_size`：多项式 $A(x)$ 的项数。
+     * `B`：多项式 $B(x)$ 的数组。
+     * `B_size`：多项式 $B(x)$ 的项数。
+
+7. **在 `add_polynomials` 函数中进行多项式相加**：
+
+   * `add_polynomials` 函数的工作是将两个多项式按指数从大到小的顺序相加，最终结果存储在全局的 `terms` 数组中。
+   * 这里的处理步骤大致如下：
+
+     1. **初始化**：创建一个全局变量 `avail` 来存储当前多项式中项的数量。这个值在添加每一项时都会递增。
+     2. **逐项比较**：`add_polynomials` 会遍历两个多项式 $A(x)$ 和 $B(x)$，按照指数从大到小的顺序进行处理。
+
+        * 如果两个多项式中某项的指数相同，就将它们的系数相加，存入 `terms` 数组。
+        * 如果某项的指数不同，就将该项直接存入 `terms` 数组中。
+     3. **结果存储**：相加后的每一项会存储在 `terms` 数组中，直到所有项都处理完。
+     4. **处理剩余项**：如果一个多项式的项比另一个多项式多，剩余的项直接加入到结果中。
+
+8. **输出结果多项式**：
+
+   ```c
+   printf("Sum of A(x) and B(x): ");
+   ```
+
+   * 这行代码会打印输出一条提示，说明接下来将要打印的是 $A(x)$ 和 $B(x)$ 相加后的结果。
+
+9. **调用 `print_polynomial` 函数打印多项式**：
+
+   ```c
+   print_polynomial();
+   ```
+
+   * 这行代码会调用 `print_polynomial()` 函数，打印存储在 `terms` 数组中的结果多项式。
+   * `print_polynomial` 函数遍历 `terms` 数组，输出每个多项式项的系数和指数，格式为 `coef * x^expon`，项与项之间用 `+` 连接。
+
+10. **程序结束**：
+
+```c
+return 0;
+```
+
+* 这行代码结束 `main()` 函数，并返回 0，表示程序成功执行并正常退出。
+
+### 整个流程图：
+
+1. **程序启动** → 进入 `main()` 函数。
+2. **初始化多项式 A(x) 和 B(x)** → 定义 `A[]` 和 `B[]`。
+3. **计算多项式的大小** → 分别计算 `A_size` 和 `B_size`。
+4. **调用 `add_polynomials` 函数** → 将多项式 A 和 B 传递给函数，进行相加。
+5. **在 `add_polynomials` 中逐项比较并处理** → 将结果存储在 `terms` 数组中。
+6. **调用 `print_polynomial` 打印结果** → 输出相加后的多项式。
+7. **程序结束** → 返回 0，退出程序。
+
+### 示例：
+
+如果 $A(x) = 2x^{1000} + 10x^4 - 3x^2$ 和 $B(x) = x^6 - 10x^3 + 3x^2 + 4$，相加后的结果可能会是：
+
+```
+Sum of A(x) and B(x): 2.000000x^1000 + 1.000000x^6 + 10.000000x^4 + -10.000000x^3 + 0.000000x^2 + 4.000000x^0
+```
+
+### 总结：
+
+这个程序的核心功能是通过比较两个多项式项的指数，将它们按指数从大到小的顺序相加，最终输出一个结果多项式。每个步骤都细致地处理了多项式的每一项，保证了正确的输出格式。
+
+*/
