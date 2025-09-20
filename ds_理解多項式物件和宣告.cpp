@@ -23,4 +23,12 @@ int main()
     }// 輸出多項式的各項係數
     
     return 0;
+
 }
+
+/*
+1.poly 是 Polynomial 類型的變數。
+2.degree 和 coef 是 Polynomial 結構體裡面的成員（成員變數）。
+3.當你創建了 poly 這個變數時，degree 和 coef 已經是 poly 這個物件的一部分，並且它們的型別已經被指定（int 和 float[MAX_degree]）。
+4.你可以直接使用 poly.degree 和 poly.coef[n] 來訪問和操作它們，而不需要重新宣告變數型別。
+*/
