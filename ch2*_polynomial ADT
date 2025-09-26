@@ -1,0 +1,148 @@
+Two ways to create the type polynomial in C
+Representation I
+define MAX_degree 101 /*MAX degree of polynomial+1*/
+  typedef struct{	
+    int degree;
+    float coef [MAX_degree];
+  }polynomial;
+degree是最高次方
+coef儲存各項係數
+
+這是第一種表示法
+直接用陣列拉個多項式的資料結構
+
+Advantage: easy implementation
+Disadvantage: waste space when polynomial is sparse
+Memory used: 101 *sizeof(float) + sizeof(int)
+f(x) = 5x100+6x+7 and f(x)= 100x100+99x99+…+1 
+   uses same amount of memory
+
+
+
+
+
+第二種是只有非零值要表示
+Advantage: conserves memory usage
+  Memory used: proportional to number of terms
+Disadvantage: more housekeeping details
+
+MAX_TERMS 100 /*size of terms array*/
+  typedef struct{	
+    float coef;	
+    int expon;
+  }polynomial;
+
+  polynomial terms [MAX_TERMS];
+  int avail = 0;
+
+
+好處：充分利用記憶體
+把它當成多項式的記憶體，不同多項式都可以存進去
+第一個多項式會多兩個變數
+startA、endA
+startB、endB
+
+練習：
+A(x) = 2x1000+10x4-3x2
+B(x) = x6-10x3+3x2+4
+用start和finish表示
+
+  
+//#Using ADT Functions: Adding Two Polynomials
+d = zero()//startD會從7的位置開始存
+只要兩個多項式都還沒被確認到做完的話，就會迴圈
+  用switch COMPARE比較兩個目前已經做完的最高次方項
+case -1：//<
+    d = Attach(d, coef(b, Lead_Exp(b)), Lead_Exp(b));//往後看attach在幹嘛
+    b = Remove(b, Lead_Exp(b));//算完的次方把它移掉
+    break;
+case 0：//=
+    sum = Coef(a, Lead_Exp(a)) + Coef(b, Lead_Exp(b));//把同次方的係數加起來
+         if (sum) { /* non_zero term*/
+            Attach(d, sum, Lead_Exp(a));//加完不等於0就會attach回d
+            a = Remove(a , Lead_Exp(a));
+            b = Remove(b , Lead_Exp(b));
+            }
+         break;
+case 1：//>
+    d = Attach(d, coef(a, Lead_Exp(a)), Lead_Exp(a));//往後看attach在幹嘛
+    b = Remove(b, Lead_Exp(b));//算完的次方把它移掉
+  
+
+
+
+
+//#attach()
+  void attach(float coefficient, int exponent)//傳入係數和指數次方數
+{  /* a new term to the polynomial */
+   if (avail >= MAX_TERMS) {
+      fprintf(stderr, “Too many terms.\n”);
+      exit (1);
+   }//先注意有沒有超出邊界
+   terms[avail].coef = coefficient;//把傳入的係數放進第avail項的coef
+   terms[avail++].expon = exponent;//把傳入的指數次方數放進第avail+1項的expon
+}
+
+  remove()怎麼寫？
+
+//padd()
+To compute D(x)=A(x)+B(x):  padd(sA, fA, sB, fB, sD, fD)
+While (sA <= fA && sB <=fB)
+   switch (COMPARE(terms[sA].expon, terms[sB].expon)) {
+      case -1: /* a expon < b expon */
+         attach(terms[sB].coef, terms[sB].expon);
+         sB++;//不一定要remove，只要有一直往後移的動作就好了
+         break;
+      case 0:  /* equal exponents */
+         coefficient = terms[sA].coef + terms[sB].coef;//同次方的係數相加
+         if (coefficient)
+            attach(coefficient, terms[sA].expon);//把相加的係數和當前次方attach到d
+         sA++;   sB++;
+         break;
+      case 1:  /* a expon > b expon */
+         attach(terms[sA].coef, terms[sA].expon);
+         sA++;
+
+sA == startA
+fA == finishA
+
+A(x) = 2x1000++1
+B(x) = x4-10x3+3x2
+
+  先執行case 1，因為a次方>b，1000>4，把A的一千次方放到結果去。
+        case -1，attach 1 x4 -10 x3 3 x2 到d
+        case 0，兩者係數相加，把係數和次方attach到d
+  結束
+worst case是兩多項式次方都不同，O(n+m)
+best case是指數次方完全一致
+
+//#最終成果!!
+void padd(int stara, int finisha, int startb, int finishb, int *startd, int *finishd){
+//add A(x) and B(x) to obtain D(x)
+float coefficient;
+*startd = avail;
+  while (starta <= finisha && startb <= finishb)
+    switch(COMPARE(terms[starta].expon,terms[startb].expon)){
+      case -1: //<
+            attach(terms[startb].coef,terms[startb].expon)
+            startb++;
+            break;
+      case 0: //=
+            coefficient = terms[starta].coef + terms[startb].coef;
+            if (coefficient)
+              attach(coefficient,terms[starta].expon);
+            starta++;
+            startb++;
+            break;
+      case 1: //>
+            attach(terms[starta].coef,terms[starta].expon)
+            starta++;
+    }
+    /* add in remaining terms of A(x) */
+    for(; starta <= finisha; starta++)
+      attach(terms[starta.coef,terms[starta].expon);
+    /* add in remaining terms of B(x) */
+    for(; startb <= finishb; startb++)
+      attach(terms[startb.coef,terms[startb].expon);
+    *finishd = avail-1;
+}
