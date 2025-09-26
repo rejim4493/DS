@@ -1,0 +1,43 @@
+typedef struct {
+    int   *data;
+    size_t capacity;
+    size_t top;      // index of next insert; 
+} Stack;
+
+/* ---------- Creators / Destructors ---------- */
+Stack *stack_create(size_t capacity) {
+    Stack *s = malloc(sizeof(Stack));
+    if (!s) return NULL;
+    s->data = malloc(sizeof(int) * capacity);
+    if (!s->data) { free(s); return NULL; }
+    s->capacity = capacity;
+    s->top = 0;
+    return s;
+}
+
+void stack_destroy(Stack *s) {
+    if (!s) return;
+    free(s->data);
+    free(s);
+}
+
+/* ---------- Transformers ---------- */
+bool stack_push(Stack *s, int value) {
+    if (!s || s->top == s->capacity) return false; // full
+    s->data[s->top++] = value;
+    return true;
+}
+
+bool stack_pop(Stack *s, int *out) {
+    if (!s || s->top == 0) return false; // empty
+    if (out) *out = s->data[--s->top];
+    else     s->top--;
+    return true;
+}
+
+/*
+'->'表示指標用的'.'
+在C++常見
+https://gist.github.com/LeeKLTW/e5004f2d7046d43676d0891af8a13ef7
+
+*/
