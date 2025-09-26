@@ -12,3 +12,4 @@ float sum(float list[], int n)
     return tempsum;
     count++; /* for return */
 }
+//Defining one exact “step” is not required!
