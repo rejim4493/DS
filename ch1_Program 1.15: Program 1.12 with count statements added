@@ -1,0 +1,12 @@
+*Program 1.15: Program 1.12 with count statements added
+
+float rsum(float list[], int n)
+{
+    count++; /* for if conditional */
+    if (n) {
+        count++; /* for add and return operation */
+        return rsum(list, n-1) + list[n-1];
+    }
+    count++; /* for the return operation */
+    return list[0];
+}
