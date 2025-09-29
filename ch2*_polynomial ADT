@@ -146,3 +146,8 @@ float coefficient;
       attach(terms[startb.coef,terms[startb].expon);
     *finishd = avail-1;
 }
+
+如果記憶體不夠，就要換更大的空間擴充。
+優點：memory compaction，有項次用不到可以被刪除，整體被壓實，但資料移動很花時間。
+
+
