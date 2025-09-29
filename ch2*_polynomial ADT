@@ -117,7 +117,7 @@ worst case是兩多項式次方都不同，O(n+m)
 best case是指數次方完全一致
 
 //#最終成果!!
-void padd(int stara, int finisha, int startb, int finishb, int *startd, int *finishd){
+void padd(int starta, int finisha, int startb, int finishb, int *startd, int *finishd){
 //add A(x) and B(x) to obtain D(x)
 float coefficient;
 *startd = avail;
