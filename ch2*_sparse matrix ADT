@@ -1,0 +1,149 @@
+Matrix Creation
+Matrix Addition/Subtraction, 對應位址相加
+Matrix Multiplication, 左直右豎，
+Matrix Transpose, 以左上右下為軸翻轉；row和col對調
+
+Sparse Maxtrix ADT
+Create(max_row, max_col)
+Transpose(a)
+Add(a,b)
+Multiply(a,b)
+
+Matrix Representations
+by 2D arrays
+int A[MAX_ROWS][MAX_COLS]
+缺點和多項式一樣，會佔有固定的記憶體空間。
+
+sparse matrix
+會浪費記憶體空間去儲存0，36格只用到6格。
+
+變成List of triplets <row,col,value>
+宣告一個structure有三個欄位
+用array儲存，就要有個順序，這裡用row major
+a[0]是開頭，幾乘幾的矩陣，非零項有幾項
+#define MAX_TERMS 101 
+typedef struct {
+  int col;
+  int row;
+  int value;
+  }term;
+term a[MAX_TERMS];
+
+在結構宣告時，其實還是已經配給我們了，但在演算法當中，0項的部分就可以不用做，效率up。
+
+trans第一種作法，row col交換(複雜度是o(n))，再sorting從小到大(排序複雜度是o(n log n))
+調換會是每一項，所以是n，要乘以搜尋複雜度是log n。
+
+如果有個公式可以預先知道換過去的位子在哪，就會更快。
+
+先調換再排序叫演算法0
+演算法1
+先掃一遍col，把0放過去，從小到大掃幾遍就完成row majpr
+void transpose(term a[], terms b[])
+
+{
+  int n, i, h currentb;
+  n = a[0].value;/*知道有幾個非零項*/
+  b[0].row = a[0].col;/*b用來接收a的col數目*/
+  b[0].col = a[0].row;
+  b[0].value = n;/*非零項跟n一樣多*/
+  if (n > 0){/*若n等於0會直接跳出*/
+    currentb = 1;//非零項裡面的第一項
+     for(i = 0; i < a[0].col; i++){//幾個col執行幾次//逐列找對應到col放過去
+      for(j = 1; j <= n; j++){//幾個非0項執行幾次
+        if (a[j].col == 1) {
+          b[currentb].row = a[j].col;
+          b[currentb].col = a[j].row;
+          b[currentb].value = a[j].value;
+          current++;
+        }//if
+      }//for2
+    }//for1
+  }//if
+時間複雜度
+O(c*n)
+
+演算法2 fast transpose algorithm
+逐列逐找太費時，快法計數轉更靈。先算每列非零數，再排起點速完成。
+額外用1個array算每一列的非0項有幾個，每一項的開頭就可以預先算好。
+
+//sparse matrix tanspose II
+#include <stdio.h>
+
+void fast_transpose(term a[], term b[]){
+  int row_terms[MAX_COL], starting_pos[MAX_COL];
+  int i, j, num_cols = a[0].col, num_terms = a[0].value;
+  b[0].row = num_cols; b[0].col = a[0].row;
+  b[0].value = num_terms;
+  if (num_terms > 0){
+    for (i = 0; i < num_cols; i++)
+      row_terms[i] = 0;
+    for (i = 1; i <= num_terms; i++)
+      row_terms[a[i].col]++;
+    starting_pos[0] = 1;
+    for (i = 1; i < num_cols; i++)
+      starting_pos[i] = starting_pos[i-1] + row_terms[i-1];
+    for (i = 1; i < num_terms; i++){
+      j = starting_pos[a[i].col]++;
+      b[j].row = a[i].col; b[j].col = a[i].row;
+      b[j].value = a[i].value;
+    }
+  }
+}
+還有錯要改。
+main.cpp: In function ‘void fast_transpose(term*, term*)’:
+main.cpp:20:17: error: ‘MAX_COL’ was not declared in this scope
+   20 |   int row_terms[MAX_COL], starting_pos[MAX_COL];
+      |                 ^~~~~~~
+main.cpp:26:7: error: ‘row_terms’ was not declared in this scope; did you mean ‘num_terms’?
+   26 |       row_terms[i] = 0;
+      |       ^~~~~~~~~
+      |       num_terms
+main.cpp:28:7: error: ‘row_terms’ was not declared in this scope; did you mean ‘num_terms’?
+   28 |       row_terms[a[i].col]++;
+      |       ^~~~~~~~~
+      |       num_terms
+main.cpp:29:5: error: ‘starting_pos’ was not declared in this scope
+   29 |     starting_pos[0] = 1;
+      |     ^~~~~~~~~~~~
+main.cpp:31:45: error: ‘row_terms’ was not declared in this scope; did you mean ‘num_terms’?
+   31 |       starting_pos[i] = starting_pos[i-1] + row_terms[i-1];
+      |                                             ^~~~~~~~~
+      |                                             num_terms
+
+
+
+
+//mmult
+for(i = 1; i <= totala; ){
+  column = new_b[1].row;
+  for (j = 1; j <= totalb+1;){
+    if(a[i].row != row) {
+      storesum(d, &totald, row, column, &sum);
+      i = row_begin;
+      for (;new_b[j].row == column; j++);
+        column = new_b[j].row;
+      }
+      else if (new_b[j].row != column){
+        storesum(d, &totald, row, column, &sum);
+        i = row_begin;
+        column = new_b[j].row;
+      }
+      else switch(COMPARE(a[i].col, new_b[j].col)){
+        case -1:
+          i++;
+        case 0:
+          sum += (a[i++].value * new_b[j++].value);
+          break;
+        case 1:
+          j++;
+      }
+    }
+    for(; a[i].row == row; i++)
+      ;
+    row_begin = i; row = a[i].row;
+  }
+  d[0].row = rows_a;
+  d[0].col = cols_b; d[0].value = totald;
+}
+
