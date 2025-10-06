@@ -1,0 +1,200 @@
+/*單一多項式的處理：輸入一個X的多項式P，提供以下功能
+
+基本(15分)
+1)輸出多項式 P 的最高次方項，及非零項數量。
+2)依規定格式輸出多項式 P。(例: Polynomial: 7x^8+5x^6+3x^4)。
+3)查詢指定指數次方的係數值 (不存在則輸出 0)。
+4)給定X的值，計算出P(x)的數值。
+
+進階(15分)
+5)對 P 新增一個非零項 (若該指數已存在，輸出錯誤訊息)。
+6)移除 P 的某一項 (若該指數不存在，輸出錯誤訊息)。
+7)先輸出功能1、2，且功能3~6可以任意順序執行，回傳輸出結果。
+*/
+#include <stdio.h>
+#include <string.h>
+#include <math.h>
+
+struct Polynomial {
+    int coeff;
+    int exp;
+};
+
+void readPolynomial(struct Polynomial poly[], int *terms) {
+    printf("Number of terms: ");
+    scanf("%d", terms);
+    printf("Enter coefficient and exponent in DESCENDING order:\n");
+    for (int i = 0; i < *terms; i++) {
+        printf("Coefficient: ");
+        scanf("%d", &poly[i].coeff);
+        printf("Exponent: ");
+        scanf("%d", &poly[i].exp);
+    }
+}
+
+void displayPolynomial(struct Polynomial poly[], int terms) {
+    if (terms == 0) {
+        printf("Polynomial is empty\n");
+        return;
+    }
+    printf("Polynomial: ");
+    for (int i = 0; i < terms; i++) {
+        int c = poly[i].coeff;
+        int e = poly[i].exp;
+
+        if (i > 0 && c >= 0)
+            printf("+");
+        printf("%d", c);
+
+        if (e == 1)
+            printf("x");
+        else if (e != 0)
+            printf("x^%d", e);
+    }
+    printf("\n");
+}
+
+void showDegreeAndTerms(struct Polynomial poly[], int terms) {
+    if (terms == 0) {
+        printf("Polynomial is empty.\n");
+        return;
+    }
+    printf("degree: %d, terms: %d\n", poly[0].exp, terms);
+}
+
+void queryCoefficient(struct Polynomial poly[], int terms, int queryExp) {
+    int found = 0;
+    for (int i = 0; i < terms; i++) {
+        if (poly[i].exp == queryExp) {
+            printf("coeff of x^%d = %d\n", queryExp, poly[i].coeff);
+            found = 1;
+            break;
+        }
+    }
+    if (!found)
+        printf("coeff of x^%d = 0\n", queryExp);
+}
+
+void evaluatePolynomial(struct Polynomial poly[], int terms, int x) {
+    long result = 0;
+    for (int i = 0; i < terms; i++) {
+        result += poly[i].coeff * pow(x, poly[i].exp);
+    }
+    printf("P(%d) = %ld\n", x, result);
+}
+
+void addTerm(struct Polynomial poly[], int *terms, int coeff, int exp) {
+    // 檢查是否已存在
+    for (int i = 0; i < *terms; i++) {
+        if (poly[i].exp == exp) {
+            printf("Error: term already exists\n");
+            return;
+        }
+    }
+
+    // 找插入位置（降冪）
+    int pos = *terms;
+    for (int i = 0; i < *terms; i++) {
+        if (poly[i].exp < exp) {
+            pos = i;
+            break;
+        }
+    }
+
+    // 往後移
+    for (int i = *terms; i > pos; i--) {
+        poly[i] = poly[i - 1];
+    }
+
+    // 插入新項
+    poly[pos].coeff = coeff;
+    poly[pos].exp = exp;
+    (*terms)++;
+
+    displayPolynomial(poly, *terms);
+}
+
+void removeTerm(struct Polynomial poly[], int *terms, int exp) {
+    int found = 0;
+    for (int i = 0; i < *terms; i++) {
+        if (poly[i].exp == exp) {
+            found = 1;
+            for (int j = i; j < *terms - 1; j++)
+                poly[j] = poly[j + 1];
+            (*terms)--;
+            break;
+        }
+    }
+
+    if (!found) {
+        printf("Error: term not found\n");
+        return;
+    }
+
+    if (*terms == 0)
+        printf("Polynomial is empty\n");
+    else
+        displayPolynomial(poly, *terms);
+}
+
+// ✅ 功能 7：互動式指令處理
+void interactiveMode(struct Polynomial poly[], int *terms) {
+    char cmd[20];
+    printf("---- Entering Interactive Mode ----\n");
+    showDegreeAndTerms(poly, *terms);
+    displayPolynomial(poly, *terms);
+
+    // === 使用說明 ===
+    printf("\nAvailable commands:\n");
+    printf(" query <exp>        → 查詢指定指數的係數值 (ex: query 2)\n");
+    printf(" eval <x>           → 計算 P(x) 的值 (ex: eval 2)\n");
+    printf(" add <coeff> <exp>  → 新增一個非零項 (ex: add 3 4)\n");
+    printf(" remove <exp>       → 移除某一項 (ex: remove 2)\n");
+    printf(" quit               → 結束互動模式\n");
+    printf("------------------------------------\n");
+
+    while (1) {
+        printf("> ");
+        scanf("%s", cmd);
+
+        if (strcmp(cmd, "quit") == 0)
+            break;
+        else if (strcmp(cmd, "query") == 0) {
+            int exp;
+            scanf("%d", &exp);
+            queryCoefficient(poly, *terms, exp);
+        }
+        else if (strcmp(cmd, "eval") == 0) {
+            int x;
+            scanf("%d", &x);
+            evaluatePolynomial(poly, *terms, x);
+        }
+        else if (strcmp(cmd, "add") == 0) {
+            int coeff, exp;
+            scanf("%d %d", &coeff, &exp);
+            addTerm(poly, terms, coeff, exp);
+        }
+        else if (strcmp(cmd, "remove") == 0) {
+            int exp;
+            scanf("%d", &exp);
+            removeTerm(poly, terms, exp);
+        }
+        else {
+            printf("Unknown command. Type one of: query, eval, add, remove, quit\n");
+        }
+    }
+    printf("---- Exiting Interactive Mode ----\n");
+}
+
+
+int main() {
+    struct Polynomial P[15];
+    int terms = 0;
+
+    readPolynomial(P, &terms);
+
+    // 功能 7：啟動互動式命令模式
+    interactiveMode(P, &terms);
+
+    return 0;
+}
