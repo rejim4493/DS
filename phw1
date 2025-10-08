@@ -47,6 +47,13 @@ void readPolynomial(struct Polynomial poly[], int *terms) {
 //============================================================
 // 函式：displayPolynomial()
 // 功能：將多項式以標準形式輸出，如 "3x^4+2x^2-7"
+//變數：
+//poly[]	多項式項目陣列
+//terms	多項式的項數
+//name	多項式名稱（如 "P"、"p1+p2"）
+//i	目前輸出的項目索引
+//c	暫存當前項目的係數
+//e	暫存當前項目的指數
 //============================================================
 void displayPolynomial(struct Polynomial poly[], int terms, const char *name) {
     if (terms == 0) {
@@ -72,6 +79,15 @@ void displayPolynomial(struct Polynomial poly[], int terms, const char *name) {
 // 函式：addPolynomials()
 // 功能：執行 P1 + P2，多項式加法（合併同次方）
 // 方法：類似「合併排序」，利用兩指標比對 exponent
+//P1[]	第一個多項式
+//t1	P1 的項數
+//P2[]	第二個多項式
+//t2	P2 的項數
+//result[]	儲存加法結果的陣列
+//i	P1 的索引
+//j	P2 的索引
+//k	result 的索引（代表目前結果有幾項）
+//sum	當兩項次方相同時，暫存其係數和
 //============================================================
 int addPolynomials(struct Polynomial P1[], int t1, struct Polynomial P2[], int t2, struct Polynomial result[]) {
     int i = 0, j = 0, k = 0;
@@ -98,6 +114,8 @@ int addPolynomials(struct Polynomial P1[], int t1, struct Polynomial P2[], int t
 // 函式：subtractPolynomials()
 // 功能：執行 P1 - P2
 // 方法：先將 P2 所有係數取負，再呼叫 addPolynomials()
+//參數同上
+//negP2[] 暫存「P2 取負號後」的版本
 //============================================================
 int subtractPolynomials(struct Polynomial P1[], int t1, struct Polynomial P2[], int t2, struct Polynomial result[]) {
     struct Polynomial negP2[MAX_TERMS];
@@ -111,6 +129,12 @@ int subtractPolynomials(struct Polynomial P1[], int t1, struct Polynomial P2[], 
 //============================================================
 // 函式：multiplyPolynomials()
 // 功能：執行 P1 * P2（兩兩相乘並合併同次方）
+//temp[]	暫存所有交叉相乘的中間結果
+//ttemp	暫存結果的項數
+//k	最終結果陣列索引
+//sum	合併同次方時暫存係數總和
+//e	合併同次方時暫存共同指數
+//tmp	結構交換暫存變數（用於排序）
 //============================================================
 int multiplyPolynomials(struct Polynomial P1[], int t1, struct Polynomial P2[], int t2, struct Polynomial result[]) {
     struct Polynomial temp[MAX_TERMS];
@@ -162,6 +186,21 @@ int multiplyPolynomials(struct Polynomial P1[], int t1, struct Polynomial P2[], 
 //  - 每次取最高次項相除 → 得到商的一項
 //  - 再用該項 × P2 從餘式中減去
 //  - 重複直到餘式次方 < 除數次方
+//參數
+//P1[]	被除式
+//t1	被除式項數
+//P2[]	除式
+//t2	除式項數
+//quotient[]	儲存商
+//*tq	商的項數（回傳用）
+//remainder[]	儲存餘式
+//*tr	餘式項數（回傳用）
+//變數
+//allZero	用來檢查除式是否為 0
+//coeff, exp	每次除法步驟中的商項係數與指數
+//term[]	暫存當前商的一項
+//temp[]	暫存該商項乘以除式後的結果
+//ttemp	temp 的項數
 //============================================================
 void dividePolynomials(struct Polynomial P1[], int t1, struct Polynomial P2[], int t2,
                        struct Polynomial quotient[], int *tq,
@@ -200,6 +239,13 @@ void dividePolynomials(struct Polynomial P1[], int t1, struct Polynomial P2[], i
 //============================================================
 // 函式：singlePolynomialMenu()
 // 功能：單一多項式 P 的功能選單
+//P[]	儲存單一多項式
+//terms	項數
+//choice	使用者選擇的功能編號
+//exp	指定查詢的指數
+//found	查詢係數時判斷是否找到對應項
+//x	代入計算的 x 值
+//sum	計算 P(x) 時的總和
 //============================================================
 void singlePolynomialMenu() {
     struct Polynomial P[15];
@@ -256,6 +302,13 @@ void singlePolynomialMenu() {
 //============================================================
 // 函式：twoPolynomialsMenu()
 // 功能：兩個多項式 P1, P2 的功能選單（加減乘除）
+//P1[], P2[]	兩個輸入的多項式
+//result[]	加減乘結果
+//quotient[], remainder[]	除法的商與餘數
+//t1, t2	P1、P2 的項數
+//tres	結果項數
+//tq, tr	商與餘式項數
+//choice	使用者輸入選單選項
 //============================================================
 void twoPolynomialsMenu() {
     struct Polynomial P1[15], P2[15], result[50], quotient[50], remainder[50];
@@ -339,6 +392,278 @@ int main() {
         } else {
             printf("Invalid choice. Please enter 0, 1, or 2.\n");
         }
+    }
+    return 0;
+}
+/////////////////////////////////////////////////
+/////////////////////////////////////////////////
+/////////////////////////////////////////////////
+/////////////////////////////////////////////////
+/////////////////////////////////////////////////
+/////////////////////////////////////////////////
+/////////////////////////////////////////////////
+/////////////////////////////////////////////////
+/////////////////////////////////////////////////
+/////////////////////////////////////////////////
+/////////////////////////////////////////////////
+/////////////////////////////////////////////////
+/////////////////////////////////////////////////
+/////////////////////////////////////////////////
+/////////////////////////////////////////////////
+/////////////////////////////////////////////////
+/////////////////////////////////////////////////
+/////////////////////////////////////////////////
+/////////////////////////////////////////////////
+/////////////////////////////////////////////////
+/////////////////////////////////////////////////
+#include <stdio.h>
+#include <string.h>
+#include <math.h>
+
+struct Polynomial {
+    int coeff;
+    int exp;
+};
+
+/* ============================================================
+   基本操作函式區：多項式加減乘除
+   ============================================================ */
+int addPolynomials(struct Polynomial A[], int na, struct Polynomial B[], int nb, struct Polynomial R[]) {
+    int i = 0, j = 0, k = 0;
+    while (i < na && j < nb) {
+        if (A[i].exp == B[j].exp) {
+            int s = A[i].coeff + B[j].coeff;
+            if (s != 0) { R[k].coeff = s; R[k].exp = A[i].exp; k++; }
+            i++; j++;
+        } else if (A[i].exp > B[j].exp) {
+            R[k++] = A[i++];
+        } else {
+            R[k++] = B[j++];
+        }
+    }
+    while (i < na) R[k++] = A[i++];
+    while (j < nb) R[k++] = B[j++];
+    return k;
+}
+
+int subtractPolynomials(struct Polynomial A[], int na, struct Polynomial B[], int nb, struct Polynomial R[]) {
+    struct Polynomial negB[50];
+    for (int i = 0; i < nb; i++) {
+        negB[i].coeff = -B[i].coeff;
+        negB[i].exp = B[i].exp;
+    }
+    return addPolynomials(A, na, negB, nb, R);
+}
+
+int multiplyPolynomials(struct Polynomial A[], int na, struct Polynomial B[], int nb, struct Polynomial R[]) {
+    struct Polynomial tmp[500];
+    int tcnt = 0;
+
+    for (int i = 0; i < na; i++) {
+        for (int j = 0; j < nb; j++) {
+            tmp[tcnt].coeff = A[i].coeff * B[j].coeff;
+            tmp[tcnt].exp = A[i].exp + B[j].exp;
+            tcnt++;
+        }
+    }
+
+    int k = 0;
+    for (int i = 0; i < tcnt; i++) {
+        if (tmp[i].coeff == 0) continue;
+        int sum = tmp[i].coeff;
+        int e = tmp[i].exp;
+        for (int j = i + 1; j < tcnt; j++) {
+            if (tmp[j].exp == e) {
+                sum += tmp[j].coeff;
+                tmp[j].coeff = 0;
+            }
+        }
+        if (sum != 0) {
+            R[k].coeff = sum;
+            R[k].exp = e;
+            k++;
+        }
+    }
+
+    // 降冪排序
+    for (int i = 0; i < k - 1; i++) {
+        for (int j = i + 1; j < k; j++) {
+            if (R[i].exp < R[j].exp) {
+                struct Polynomial t = R[i];
+                R[i] = R[j];
+                R[j] = t;
+            }
+        }
+    }
+    return k;
+}
+
+int dividePolynomials(struct Polynomial A[], int na, struct Polynomial B[], int nb,
+                      struct Polynomial Q[], struct Polynomial Rr[]) {
+    for (int i = 0; i < na; i++) Rr[i] = A[i];
+    int nr = na;
+    int nq = 0;
+
+    while (nr > 0 && Rr[0].exp >= B[0].exp) {
+        int coeff = Rr[0].coeff / B[0].coeff;
+        int exp = Rr[0].exp - B[0].exp;
+        Q[nq].coeff = coeff;
+        Q[nq].exp = exp;
+        nq++;
+
+        struct Polynomial term[1] = {{coeff, exp}};
+        struct Polynomial temp[200];
+        int nt = multiplyPolynomials(term, 1, B, nb, temp);
+        struct Polynomial newR[200];
+        nr = subtractPolynomials(Rr, nr, temp, nt, newR);
+        for (int i = 0; i < nr; i++) Rr[i] = newR[i];
+    }
+    return nq;
+}
+
+/* ============================================================
+   輸出與解析工具函式區
+   ============================================================ */
+void printPoly(struct Polynomial P[], int n, const char *prefix) {
+    printf("%s", prefix);
+    for (int i = 0; i < n; i++) {
+        int c = P[i].coeff;
+        int e = P[i].exp;
+        if (i > 0 && c >= 0) printf("+");
+        printf("%d", c);
+        if (e == 1) printf("x");
+        else if (e != 0) printf("x^%d", e);
+    }
+    printf("\n");
+}
+
+/* 解析一行「3 4 2 2 -7 0」為 (coeff, exp) 對 */
+int parse_line_to_poly(char *line, struct Polynomial poly[]) {
+    int coeff, exp, nread, offset = 0, count = 0;
+    while (sscanf(line + offset, " %d %d%n", &coeff, &exp, &nread) == 2) {
+        poly[count].coeff = coeff;
+        poly[count].exp = exp;
+        count++;
+        offset += nread;
+    }
+    return count;
+}
+
+/* ============================================================
+   模式 1：單一多項式 P 的基本操作
+   ============================================================ */
+void singlePolynomialMode() {
+    struct Polynomial P[50];
+    int n = 0;
+    printf("Number of terms: ");
+    scanf("%d", &n);
+    printf("Enter coefficient and exponent in DESCENDING order:\n");
+    for (int i = 0; i < n; i++) {
+        scanf("%d%d", &P[i].coeff, &P[i].exp);
+    }
+
+    int cmd;
+    while (1) {
+        scanf("%d", &cmd);
+        if (cmd == 0) break;
+        if (cmd == 1) {
+            printPoly(P, n, "p=");
+        } else if (cmd == 2) {
+            int exp, found = 0;
+            scanf("%d", &exp);
+            for (int i = 0; i < n; i++) {
+                if (P[i].exp == exp) {
+                    printf("%d\n", P[i].coeff);
+                    found = 1;
+                    break;
+                }
+            }
+            if (!found) printf("0\n");
+        } else if (cmd == 3) {
+            int x;
+            scanf("%d", &x);
+            int sum = 0;
+            for (int i = 0; i < n; i++) {
+                sum += P[i].coeff * pow(x, P[i].exp);
+            }
+            printf("p(%d)=%d\n", x, sum);
+        }
+    }
+}
+
+/* ============================================================
+   模式 2：兩個多項式 P1, P2 的表單式操作（符合題目範例）
+   ============================================================ */
+void twoPolynomialsMode() {
+    char line[256];
+    struct Polynomial P1[50], P2[50], R[200], Q[50], Rem[50];
+    int n1 = 0, n2 = 0;
+
+    // 讀取 P1
+    do {
+        if (!fgets(line, sizeof(line), stdin)) return;
+    } while (line[0] == '\n');
+    n1 = parse_line_to_poly(line, P1);
+
+    // 讀取 P2
+    do {
+        if (!fgets(line, sizeof(line), stdin)) return;
+    } while (line[0] == '\n');
+    n2 = parse_line_to_poly(line, P2);
+
+    // 印出兩多項式
+    printPoly(P1, n1, "p1=");
+    printPoly(P2, n2, "p2=");
+
+    // 依序讀入操作代碼
+    int op;
+    while (scanf("%d", &op) == 1) {
+        if (op == 0) break;
+
+        switch (op) {
+            case 2: {
+                int n = addPolynomials(P1, n1, P2, n2, R);
+                printPoly(R, n, "p1+p2=");
+                break;
+            }
+            case 3: {
+                int n = subtractPolynomials(P1, n1, P2, n2, R);
+                printPoly(R, n, "p1-p2=");
+                break;
+            }
+            case 4: {
+                int n = multiplyPolynomials(P1, n1, P2, n2, R);
+                printPoly(R, n, "p1*p2=");
+                break;
+            }
+            case 5: {
+                int nq = dividePolynomials(P1, n1, P2, n2, Q, Rem);
+                printf("p1/p2:Quotient=");
+                printPoly(Q, nq, "");
+                printf(",Remainder= ");
+                // 找出實際餘式項數
+                int nr = 0;
+                while (nr < 50 && (Rem[nr].coeff != 0 || Rem[nr].exp != 0)) nr++;
+                printPoly(Rem, nr, "");
+                break;
+            }
+        }
+    }
+}
+
+/* ============================================================
+   主程式：顯示主選單、控制整體流程
+   ============================================================ */
+int main(void) {
+    int mode;
+    if (scanf("%d", &mode) != 1) return 0;
+    int ch;
+    while ((ch = getchar()) != '\n' && ch != EOF);
+
+    if (mode == 1) {
+        singlePolynomialMode();
+    } else if (mode == 2) {
+        twoPolynomialsMode();
     }
     return 0;
 }
