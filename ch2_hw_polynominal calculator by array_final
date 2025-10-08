@@ -1,294 +1,503 @@
+/*目前跑dc測資通過14個*/
 #include <stdio.h>
-#include <math.h>
 #include <string.h>
+#include <math.h> 
+#include <stdlib.h>
 
-#define MAX_TERMS 50
-
-//==================== 結構定義 ====================//
 struct Polynomial {
     int coeff;
     int exp;
 };
 
-//==================== 函式宣告 ====================//
-void readPolynomial(struct Polynomial poly[], int *terms);
-void displayPolynomial(struct Polynomial poly[], int terms, const char *name);
-int addPolynomials(struct Polynomial P1[], int t1, struct Polynomial P2[], int t2, struct Polynomial result[]);
-int subtractPolynomials(struct Polynomial P1[], int t1, struct Polynomial P2[], int t2, struct Polynomial result[]);
-int multiplyPolynomials(struct Polynomial P1[], int t1, struct Polynomial P2[], int t2, struct Polynomial result[]);
-void dividePolynomials(struct Polynomial P1[], int t1, struct Polynomial P2[], int t2,
-                       struct Polynomial quotient[], int *tq,
-                       struct Polynomial remainder[], int *tr);
-
-void singlePolynomialMenu(); // 單一多項式 P 功能區（含基本與進階）
-void twoPolynomialsMenu();   // 兩個多項式 P1, P2 功能區（含選單控制）
-
-//==================== 共用基本函式 ====================//
-void readPolynomial(struct Polynomial poly[], int *terms) {
-    printf("Number of terms: ");
-    scanf("%d", terms);
-    printf("Enter coefficient and exponent in DESCENDING order:\n");
-    for (int i = 0; i < *terms; i++) {
-        printf("Coefficient: ");
-        scanf("%d", &poly[i].coeff);
-        printf("Exponent: ");
-        scanf("%d", &poly[i].exp);
-    }
-}
-
-void displayPolynomial(struct Polynomial poly[], int terms, const char *name) {
-    if (terms == 0) {
-        printf("%s=0\n", name);
-        return;
-    }
-    printf("%s=", name);
-    for (int i = 0; i < terms; i++) {
-        int c = poly[i].coeff;
-        int e = poly[i].exp;
-        if (i > 0 && c >= 0)
-            printf("+");
-        printf("%d", c);
-        if (e == 1)
-            printf("x");
-        else if (e != 0)
-            printf("x^%d", e);
-    }
-    printf("\n");
-}
-
-//==================== 多項式運算 ====================//
-int addPolynomials(struct Polynomial P1[], int t1, struct Polynomial P2[], int t2, struct Polynomial result[]) {
-    int i = 0, j = 0, k = 0;
-    while (i < t1 && j < t2) {
-        if (P1[i].exp == P2[j].exp) {
-            int sum = P1[i].coeff + P2[j].coeff;
-            if (sum != 0) {
-                result[k].coeff = sum;
-                result[k].exp = P1[i].exp;
-                k++;
+// 輔助函式：將多項式按指數從大到小排序
+void sortPolynomial(struct Polynomial P[], int n) {
+    for (int i = 0; i < n - 1; i++)
+        for (int j = i + 1; j < n; j++)
+            if (P[i].exp < P[j].exp) {
+                struct Polynomial t = P[i];
+                P[i] = P[j];
+                P[j] = t;
             }
-            i++; j++;
-        } else if (P1[i].exp > P2[j].exp) result[k++] = P1[i++];
-        else result[k++] = P2[j++];
+}
+
+// 輔助函式：計算 P(x) 的數值 (Horner's method for Sparse Polynomial)
+// 修正：使用稀疏表示法的 Horner's method，解決 Segmentation Fault
+long long evalPolynomial(struct Polynomial P[], int n, int x) {
+    if (n == 0) return 0;
+    
+    // 1. 特殊情況：x=0 時，P(0) 等於常數項的係數
+    if (x == 0) {
+        for (int i = 0; i < n; i++) {
+            if (P[i].exp == 0) return P[i].coeff; 
+        }
+        return 0; 
     }
-    while (i < t1) result[k++] = P1[i++];
-    while (j < t2) result[k++] = P2[j++];
+    
+    long long result = 0;
+    
+    // P 已經按照指數從大到小排序
+    if (n > 0) {
+        // 2. 初始化結果為最高次方項的係數
+        result = P[0].coeff;
+        
+        for (int i = 1; i < n; i++) {
+            // 計算當前項 (P[i]) 和前一項 (P[i-1]) 之間的指數差
+            int exp_diff = P[i-1].exp - P[i].exp;
+            
+            // Horner's method：將結果連續乘以 x^exp_diff
+            for (int j = 0; j < exp_diff; j++) {
+                result *= x;
+            }
+            
+            // 加上當前項的係數
+            result += P[i].coeff;
+        }
+        
+        // 3. 處理最低次方項：將結果乘以 x^(P[n-1].exp)
+        int last_exp = P[n-1].exp;
+        for (int j = 0; j < last_exp; j++) {
+            result *= x;
+        }
+    }
+    return result;
+}
+
+/* ---------- 多項式基本運算 ---------- */
+int addPolynomials(struct Polynomial A[], int na, struct Polynomial B[], int nb, struct Polynomial R[]) {
+    int i = 0, j = 0, k = 0;
+    while (i < na && j < nb) {
+        if (A[i].exp == B[j].exp) {
+            int s = A[i].coeff + B[j].coeff;
+            if (s != 0) { R[k].coeff = s; R[k].exp = A[i].exp; k++; }
+            i++; j++;
+        } else if (A[i].exp > B[j].exp) {
+            if (A[i].coeff != 0) R[k++] = A[i++]; else i++;
+        } else {
+            if (B[j].coeff != 0) R[k++] = B[j++]; else j++;
+        }
+    }
+    while (i < na) { if (A[i].coeff != 0) R[k++] = A[i]; i++; }
+    while (j < nb) { if (B[j].coeff != 0) R[k++] = B[j]; j++; }
     return k;
 }
 
-int subtractPolynomials(struct Polynomial P1[], int t1, struct Polynomial P2[], int t2, struct Polynomial result[]) {
-    struct Polynomial negP2[MAX_TERMS];
-    for (int i = 0; i < t2; i++) {
-        negP2[i].coeff = -P2[i].coeff;
-        negP2[i].exp = P2[i].exp;
+int subtractPolynomials(struct Polynomial A[], int na, struct Polynomial B[], int nb, struct Polynomial R[]) {
+    struct Polynomial negB[100]; 
+    int neg_nb = 0;
+    for (int i = 0; i < nb; i++) {
+        if (B[i].coeff != 0) {
+            negB[neg_nb].coeff = -B[i].coeff;
+            negB[neg_nb].exp = B[i].exp;
+            neg_nb++;
+        }
     }
-    return addPolynomials(P1, t1, negP2, t2, result);
+    sortPolynomial(negB, neg_nb);
+    return addPolynomials(A, na, negB, neg_nb, R);
 }
 
-int multiplyPolynomials(struct Polynomial P1[], int t1, struct Polynomial P2[], int t2, struct Polynomial result[]) {
-    struct Polynomial temp[MAX_TERMS];
-    int ttemp = 0;
-    for (int i = 0; i < t1; i++) {
-        for (int j = 0; j < t2; j++) {
-            temp[ttemp].coeff = P1[i].coeff * P2[j].coeff;
-            temp[ttemp].exp = P1[i].exp + P2[j].exp;
-            ttemp++;
-        }
-    }
-    int k = 0;
-    for (int i = 0; i < ttemp; i++) {
-        if (temp[i].coeff == 0) continue;
-        int sum = temp[i].coeff;
-        int e = temp[i].exp;
-        for (int j = i + 1; j < ttemp; j++) {
-            if (temp[j].exp == e) {
-                sum += temp[j].coeff;
-                temp[j].coeff = 0;
+int multiplyPolynomials(struct Polynomial A[], int na, struct Polynomial B[], int nb, struct Polynomial R[]) {
+    struct Polynomial tmp[500];
+    int tcnt = 0;
+    
+    for (int i = 0; i < na; i++) {
+        for (int j = 0; j < nb; j++) {
+            if (A[i].coeff != 0 && B[j].coeff != 0) {
+                tmp[tcnt].coeff = A[i].coeff * B[j].coeff;
+                tmp[tcnt].exp = A[i].exp + B[j].exp;
+                tcnt++;
             }
         }
+    }
+
+    int k = 0;
+    for (int i = 0; i < tcnt; i++) {
+        if (tmp[i].coeff == 0) continue;
+        
+        int sum = tmp[i].coeff;
+        int e = tmp[i].exp;
+        
+        tmp[i].coeff = 0; 
+
+        for (int j = i + 1; j < tcnt; j++) {
+            if (tmp[j].exp == e) {
+                sum += tmp[j].coeff;
+                tmp[j].coeff = 0; 
+            }
+        }
+        
         if (sum != 0) {
-            result[k].coeff = sum;
-            result[k].exp = e;
+            R[k].coeff = sum;
+            R[k].exp = e;
             k++;
         }
     }
-    // 降冪排序
-    for (int i = 0; i < k - 1; i++)
-        for (int j = i + 1; j < k; j++)
-            if (result[i].exp < result[j].exp) {
-                struct Polynomial tmp = result[i];
-                result[i] = result[j];
-                result[j] = tmp;
-            }
+    
+    k = 0;
+    for (int i = 0; i < tcnt; i++) {
+        if (tmp[i].coeff != 0) {
+            R[k] = tmp[i];
+            k++;
+        }
+    }
+
+    sortPolynomial(R, k);
     return k;
 }
 
-void dividePolynomials(struct Polynomial P1[], int t1, struct Polynomial P2[], int t2,
-                       struct Polynomial quotient[], int *tq,
-                       struct Polynomial remainder[], int *tr) {
-    int allZero = 1;
-    for (int i = 0; i < t2; i++)
-        if (P2[i].coeff != 0) allZero = 0;
-    if (allZero) {
+/* 除法：A ÷ B = Q...Rr */
+int dividePolynomials(struct Polynomial A[], int na, struct Polynomial B[], int nb,
+                      struct Polynomial Q[], struct Polynomial Rr[]) {
+    
+    if (nb == 0 || B[0].coeff == 0) { 
         printf("p1/p2:Error: divide by zero polynomial\n");
-        *tq = *tr = 0;
-        return;
+        return -1; 
     }
+    
+    if (na == 0) return 0; 
 
-    for (int i = 0; i < t1; i++) remainder[i] = P1[i];
-    *tr = t1;
-    *tq = 0;
+    int nq = 0;
+    
+    int nr = na;
+    for (int i = 0; i < na; i++) Rr[i] = A[i];
 
-    while (*tr > 0 && remainder[0].exp >= P2[0].exp) {
-        int coeff = remainder[0].coeff / P2[0].coeff;
-        int exp = remainder[0].exp - P2[0].exp;
+    while (nr > 0 && Rr[0].exp >= B[0].exp) {
+        
+        if (Rr[0].coeff % B[0].coeff != 0) break;
 
-        quotient[*tq].coeff = coeff;
-        quotient[*tq].exp = exp;
-        (*tq)++;
+        int coeff = Rr[0].coeff / B[0].coeff;
+        int exp = Rr[0].exp - B[0].exp;
+
+        if (coeff != 0) {
+            Q[nq].coeff = coeff;
+            Q[nq].exp = exp;
+            nq++;
+        } else {
+            break; 
+        }
 
         struct Polynomial term[1] = {{coeff, exp}};
-        struct Polynomial temp[MAX_TERMS];
-        int ttemp = multiplyPolynomials(term, 1, P2, t2, temp);
+        struct Polynomial temp_product[100];
+        int nt = multiplyPolynomials(term, 1, B, nb, temp_product);
 
-        *tr = subtractPolynomials(remainder, *tr, temp, ttemp, remainder);
+        struct Polynomial temp_R[100];
+        nr = subtractPolynomials(Rr, nr, temp_product, nt, temp_R);
+        
+        memset(Rr, 0, 50 * sizeof(struct Polynomial));
+        for (int i = 0; i < nr; i++) Rr[i] = temp_R[i];
+        
+        sortPolynomial(Rr, nr);
+        
+        int i = 0;
+        while (i < nr && Rr[i].coeff == 0) i++;
+        if (i > 0) {
+            for(int j=0; j < nr - i; j++) Rr[j] = Rr[j+i];
+            nr -= i;
+        }
+    }
+    
+    return nq;
+}
+
+/* ---------- 輸出 ---------- */
+void printPoly(struct Polynomial P[], int n, const char *prefix) {
+    printf("%s", prefix);
+
+    int effective_n = 0;
+    for (int i = 0; i < n; i++) if (P[i].coeff != 0) effective_n++;
+    if (effective_n == 0) { printf("0"); return; } 
+
+    int first_term = 1;
+
+    for (int i = 0; i < n; i++) {
+        if (P[i].coeff == 0) continue;
+
+        int coeff = P[i].coeff;
+        int exp = P[i].exp;
+
+        if (!first_term) {
+            if (coeff > 0) printf("+");
+        }
+
+        if (exp == 0) { // 常數項
+            printf("%d", coeff);
+        } else { // 非常數項
+            // 係數
+            printf("%d", coeff);
+
+            // 處理 x^exp
+            printf("x^%d", exp); 
+        }
+
+        first_term = 0;
     }
 }
 
-//==================== 單一多項式功能 ====================//
-void singlePolynomialMenu() {
-    struct Polynomial P[15];
-    int terms = 0;
-    int choice;
-    printf("\n--- Single Polynomial Mode ---\n");
-    readPolynomial(P, &terms);
+/* ---------- 輔助函式：讀取多項式 (係數 指數) 對 ---------- */
+int readPoly(struct Polynomial P[]) {
+    int n = 0;
+    char line[512]; 
+    
+    if (!fgets(line, sizeof(line), stdin)) return 0;
+    
+    struct Polynomial temp_read_P[50];
+    int temp_n = 0;
+    int coeff, exp, nread, offset = 0;
+    while (sscanf(line + offset, "%d %d%n", &coeff, &exp, &nread) == 2) {
+        if (coeff != 0) {
+            temp_read_P[temp_n].coeff = coeff;
+            temp_read_P[temp_n].exp = exp;
+            temp_n++;
+            if (temp_n >= 50) break;
+        }
+        offset += nread;
+    }
+    
+    if (temp_n == 0) return 0;
 
-    while (1) {
-        printf("\n========== Single Polynomial Menu ==========\n");
-        printf("(1) Display P\n");
-        printf("(2) Query coefficient by exponent\n");
-        printf("(3) Evaluate P(x)\n");
-        printf("(0) Return to main menu\n");
-        printf("===========================================\n");
-        printf("Enter your choice: ");
-        scanf("%d", &choice);
+    sortPolynomial(temp_read_P, temp_n);
 
-        if (choice == 0) break;
-        switch (choice) {
-            case 1:
-                displayPolynomial(P, terms, "P");
+    int i = 0; 
+    int k = 0; 
+
+    while (i < temp_n) {
+        int current_exp = temp_read_P[i].exp;
+        int sum_coeff = temp_read_P[i].coeff;
+        i++;
+        
+        while (i < temp_n && temp_read_P[i].exp == current_exp) {
+            sum_coeff += temp_read_P[i].coeff;
+            i++;
+        }
+
+        if (sum_coeff != 0) {
+            P[k].coeff = sum_coeff;
+            P[k].exp = current_exp;
+            k++;
+        }
+    }
+    
+    return k; 
+}
+
+/* ---------- 單一多項式模式 ---------- */
+void singlePolynomialMode() {
+    struct Polynomial P[50];
+    
+    int n = readPoly(P);
+    
+    if (n == 0) { P[0].coeff = 0; P[0].exp = 0; } 
+
+    int menu_op;
+    
+    while (scanf("%d", &menu_op) == 1) {
+        if (menu_op == 0) break;
+        
+        switch (menu_op) {
+            case 1: { // 功能 1
+                printf("degree: %d, terms: %d\n", (n > 0 ? P[0].exp : 0), n);
                 break;
-            case 2: {
-                int exp;
-                printf("Enter exponent: ");
-                scanf("%d", &exp);
-                int found = 0;
-                for (int i = 0; i < terms; i++) {
-                    if (P[i].exp == exp) {
-                        printf("Coefficient of x^%d = %d\n", exp, P[i].coeff);
-                        found = 1;
-                        break;
+            }
+            case 2: { // 功能 2
+                printPoly(P, n, "Polynomial: ");
+                printf("\n");
+                break;
+            }
+            case 3: { // 功能 3
+                char sub[10]; scanf("%s", sub); 
+                int exp, coeff_val = 0; scanf("%d", &exp);
+                for (int i = 0; i < n; i++)
+                    if (P[i].exp == exp) { coeff_val = P[i].coeff; break; }
+                printf("coeff of x^%d=%d\n", exp, coeff_val);
+                break;
+            }
+            case 4: { // 功能 4
+                char sub[10]; scanf("%s", sub); 
+                int x; scanf("%d", &x);
+                long long sum = evalPolynomial(P, n, x); 
+                printf("P(%d)=%lld\n", x, sum);
+                break;
+            }
+            case 5: { // 功能 5: add [coeff] [exp]
+                char sub[10]; scanf("%s", sub); 
+                int coeff, exp; scanf("%d%d", &coeff, &exp); 
+                
+                int exists = 0;
+                for (int i = 0; i < n; i++) {
+                    if (P[i].exp == exp) { exists = 1; break; }
+                }
+                    
+                if (exists) {
+                    printf("Error: term already exists\n");
+                } else if (coeff != 0) {
+                    P[n].coeff = coeff; P[n].exp = exp; n++;
+                    sortPolynomial(P, n); 
+                    printPoly(P, n, "Polynomial: ");
+                    printf("\n");
+                }
+                break;
+            }
+            case 6: { // 功能 6
+                char sub[10]; scanf("%s", sub); 
+                int exp, found = 0; scanf("%d", &exp);
+                for (int i = 0; i < n; i++)
+                    if (P[i].exp == exp) { found = 1;
+                        for (int j = i; j < n - 1; j++) P[j] = P[j + 1];
+                        n--; break;
+                    }
+                    
+                if (!found) {
+                    printf("Error: term not found\n");
+                } else {
+                    if (n == 0) {
+                        printf("Polynomial is empty\n");
+                    } else {
+                        printPoly(P, n, "Polynomial: ");
+                        printf("\n");
                     }
                 }
-                if (!found) printf("Coefficient of x^%d = 0\n", exp);
                 break;
             }
-            case 3: {
-                int x;
-                printf("Enter x: ");
-                scanf("%d", &x);
-                int sum = 0;
-                for (int i = 0; i < terms; i++)
-                    sum += P[i].coeff * pow(x, P[i].exp);
-                printf("P(%d) = %d\n", x, sum);
-                break;
-            }
-            default:
-                printf("Invalid choice.\n");
-        }
-    }
-}
-
-//==================== 兩個多項式功能 ====================//
-void twoPolynomialsMenu() {
-    struct Polynomial P1[15], P2[15], result[50], quotient[50], remainder[50];
-    int t1 = 0, t2 = 0, tres = 0, tq = 0, tr = 0;
-    int choice;
-
-    printf("\n--- Two Polynomials Mode ---\n");
-    printf("Input P1:\n");
-    readPolynomial(P1, &t1);
-    printf("\nInput P2:\n");
-    readPolynomial(P2, &t2);
-
-    while (1) {
-        printf("\n========== Two Polynomials Menu ==========\n");
-        printf("(1) Display P1, P2\n");
-        printf("(2) Compute P1 + P2\n");
-        printf("(3) Compute P1 - P2\n");
-        printf("(4) Compute P1 * P2\n");
-        printf("(5) Compute P1 / P2 (Quotient and Remainder)\n");
-        printf("(0) Return to main menu\n");
-        printf("==========================================\n");
-        printf("Enter your choice: ");
-        scanf("%d", &choice);
-
-        if (choice == 0) break;
-
-        switch (choice) {
-            case 1:
-                displayPolynomial(P1, t1, "p1");
-                displayPolynomial(P2, t2, "p2");
-                break;
-            case 2:
-                tres = addPolynomials(P1, t1, P2, t2, result);
-                displayPolynomial(result, tres, "p1+p2");
-                break;
-            case 3:
-                tres = subtractPolynomials(P1, t1, P2, t2, result);
-                displayPolynomial(result, tres, "p1-p2");
-                break;
-            case 4:
-                tres = multiplyPolynomials(P1, t1, P2, t2, result);
-                displayPolynomial(result, tres, "p1*p2");
-                break;
-            case 5:
-                dividePolynomials(P1, t1, P2, t2, quotient, &tq, remainder, &tr);
-                printf("p1/p2:Quotient=");
-                displayPolynomial(quotient, tq, "");
-                if (tr > 0) {
-                    printf("Remainder=");
-                    displayPolynomial(remainder, tr, "");
+            case 7: { // 功能 7
+                printf("degree: %d, terms: %d\n", (n > 0 ? P[0].exp : 0), n);
+                printPoly(P, n, "Polynomial: ");
+                printf("\n");
+                
+                char sub_cmd[20];
+                while (scanf("%s", sub_cmd) == 1) {
+                    if (strcmp(sub_cmd, "quit") == 0) break;
+                    
+                    if (strcmp(sub_cmd, "query") == 0) {
+                        int exp, coeff_val = 0; scanf("%d", &exp);
+                        for (int i = 0; i < n; i++)
+                            if (P[i].exp == exp) { coeff_val = P[i].coeff; break; }
+                        printf("coeff of x^%d=%d\n", exp, coeff_val);
+                    } else if (strcmp(sub_cmd, "eval") == 0) {
+                        int x; scanf("%d", &x);
+                        long long sum = evalPolynomial(P, n, x);
+                        printf("P(%d)=%lld\n", x, sum);
+                    } else if (strcmp(sub_cmd, "add") == 0) {
+                        int coeff, exp, exists = 0;
+                        scanf("%d%d", &coeff, &exp);
+                        for (int i = 0; i < n; i++)
+                            if (P[i].exp == exp) { exists = 1; break; }
+                        
+                        if (exists) {
+                            printf("Error: term already exists\n");
+                        } else if (coeff != 0) {
+                            P[n].coeff = coeff; P[n].exp = exp; n++;
+                            sortPolynomial(P, n);
+                            printPoly(P, n, "Polynomial: ");
+                            printf("\n");
+                        }
+                    } else if (strcmp(sub_cmd, "remove") == 0) {
+                        int exp, found = 0;
+                        scanf("%d", &exp);
+                        for (int i = 0; i < n; i++)
+                            if (P[i].exp == exp) {
+                                found = 1;
+                                for (int j = i; j < n - 1; j++) P[j] = P[j + 1];
+                                n--; break;
+                            }
+                        if (!found) {
+                            printf("Error: term not found\n");
+                        } else {
+                            if (n == 0) {
+                                printf("Polynomial is empty\n");
+                            } else {
+                                printPoly(P, n, "Polynomial: ");
+                                printf("\n");
+                            }
+                        }
+                    }
                 }
                 break;
-            default:
-                printf("Invalid choice.\n");
+            }
+        }
+        
+        int ch; while ((ch = getchar()) != '\n' && ch != EOF); 
+    }
+}
+
+/* ---------- 兩個多項式模式 ---------- */
+void twoPolynomialsMode() {
+    struct Polynomial P1[50], P2[50], R[200], Q[50], Rem[50];
+    
+    int n1 = readPoly(P1);
+    int n2 = readPoly(P2);
+
+    int op;
+    int ch; while ((ch = getchar()) != '\n' && ch != EOF); 
+    
+    while (scanf("%d", &op) == 1) {
+        if (op == 0) break;
+        
+        memset(R, 0, sizeof(R));
+        
+        switch (op) {
+            case 1: { 
+                printPoly(P1, n1, "p1="); printf("\n");
+                printPoly(P2, n2, "p2="); printf("\n");
+                break; 
+            }
+            case 2: { 
+                int n = addPolynomials(P1, n1, P2, n2, R); 
+                sortPolynomial(R, n); 
+                printPoly(R, n, "p1+p2="); 
+                printf("\n");
+                break; 
+            }
+            case 3: { 
+                int n = subtractPolynomials(P1, n1, P2, n2, R); 
+                sortPolynomial(R, n); 
+                printPoly(R, n, "p1-p2="); 
+                printf("\n");
+                break; 
+            }
+            case 4: { 
+                int n = multiplyPolynomials(P1, n1, P2, n2, R); 
+                printPoly(R, n, "p1*p2="); 
+                printf("\n");
+                break; 
+            }
+            case 5: { 
+                memset(Q, 0, sizeof(Q));
+                memset(Rem, 0, sizeof(Rem));
+                
+                int nq = dividePolynomials(P1, n1, P2, n2, Q, Rem);
+                
+                if (nq == -1) break; 
+
+                printf("p1/p2:Quotient=");
+                if (nq == 0) printf("0");
+                else printPoly(Q, nq, "");
+                
+                printf(",Remainder=");
+                
+                int actual_nr = 0;
+                for(int i=0; i<50; i++) {
+                    if (Rem[i].coeff != 0) actual_nr = i + 1;
+                }
+                
+                if (actual_nr == 0) printf("0");
+                else printPoly(Rem, actual_nr, "");
+                
+                printf("\n");
+                break;
+            }
         }
     }
 }
 
-//==================== 主選單 ====================//
-int main() {
-    int choice;
-    while (1) {
-        printf("\n========== Polynomial Calculator ==========\n");
-        printf("(0) Exit\n");
-        printf("(1) Single polynomial P\n");
-        printf("(2) Two polynomials P1, P2\n");
-        printf("===========================================\n");
-        printf("Enter your choice: ");
-        scanf("%d", &choice);
-
-        if (choice == 0) {
-            printf("Program terminated.\n");
-            break;
-        } else if (choice == 1) {
-            singlePolynomialMenu();
-        } else if (choice == 2) {
-            twoPolynomialsMenu();
-        } else {
-            printf("Invalid choice. Please enter 0, 1, or 2.\n");
-        }
-    }
+/* ---------- 主程式 ---------- */
+int main(void) {
+    int mode;
+    
+    if (scanf("%d", &mode) != 1) return 0;
+    
+    int ch; while ((ch = getchar()) != '\n' && ch != EOF); 
+    
+    if (mode == 1) singlePolynomialMode();
+    else if (mode == 2) twoPolynomialsMode();
+    
     return 0;
 }
