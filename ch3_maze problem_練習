@@ -1,0 +1,129 @@
+#include <iostream>
+using namespace std;
+
+#define MAX_STACK_SIZE 100
+#define MAZE_ROWS 6
+#define MAZE_COLS 6
+
+// 方向偏移結構
+struct offsets {
+    int vert;
+    int horiz;
+};
+
+// 堆疊元素結構
+struct element {
+    int row;
+    int col;
+    int dir;
+};
+
+// 八個方向：上、右上、右、右下、下、左下、左、左上
+offsets moves[8] = {
+    {-1, 0},  // 上
+    {-1, 1},  // 右上
+    {0, 1},   // 右
+    {1, 1},   // 右下
+    {1, 0},   // 下
+    {1, -1},  // 左下
+    {0, -1},  // 左
+    {-1, -1}  // 左上
+};
+
+// 迷宮地圖（加上邊界）
+int maze[MAZE_ROWS + 2][MAZE_COLS + 2] = {
+    {1,1,1,1,1,1,1,1},
+    {1,0,0,1,0,0,0,1},
+    {1,0,1,0,1,1,0,1},
+    {1,0,1,0,0,0,0,1},
+    {1,0,1,1,1,1,0,1},
+    {1,0,0,0,0,0,0,1},
+    {1,1,1,1,1,1,1,1},
+};
+
+// 標記已走過的位置
+int mark[MAZE_ROWS + 2][MAZE_COLS + 2] = {0};
+
+// 堆疊
+element stack[MAX_STACK_SIZE];
+int top = -1;
+
+// push 函式
+void push(element item) {
+    if (top >= MAX_STACK_SIZE - 1) {
+        cout << "Stack overflow\n";
+        return;
+    }
+    stack[++top] = item;
+}
+
+// pop 函式
+element pop() {
+    if (top == -1) {
+        cout << "Stack underflow\n";
+        return {-1, -1, -1};
+    }
+    return stack[top--];
+}
+
+// DFS 解迷宮主邏輯
+void solveMaze() {
+    int row = 1, col = 1;
+    mark[row][col] = 1;
+
+    element temp = {row, col, 0};
+    push(temp);
+
+    while (top != -1) {
+        temp = pop();
+        row = temp.row;
+        col = temp.col;
+        int dir = temp.dir;
+
+        while (dir < 8) {
+            int next_row = row + moves[dir].vert;
+            int next_col = col + moves[dir].horiz;
+
+            if (next_row == MAZE_ROWS && next_col == MAZE_COLS) {
+                // 找到出口
+                cout << "Path found:\n";
+                for (int i = 0; i <= top; i++)
+                    cout << "(" << stack[i].row << "," << stack[i].col << ") → ";
+                cout << "(" << row << "," << col << ") → ";
+                cout << "(" << MAZE_ROWS << "," << MAZE_COLS << ")\n";
+                return;
+            }
+
+            if (maze[next_row][next_col] == 0 && mark[next_row][next_col] == 0) {
+                mark[next_row][next_col] = 1;
+
+                // 回存目前位置與下一個方向
+                temp.row = row;
+                temp.col = col;
+                temp.dir = dir + 1;
+                push(temp);
+
+                // 移動到下一格
+                row = next_row;
+                col = next_col;
+                dir = 0;
+            } else {
+                dir++;
+            }
+        }
+    }
+
+    cout << "No path found\n";
+}
+
+int main() {
+    solveMaze();
+    return 0;
+}
+
+/*output
+[?2004l
+Path found:
+(1,1) → (1,2) → (2,3) → (1,4) → (1,5) → (1,6) → (2,6) → (3,6) → (4,6) → (5,6) → (6,6)
+[?2004h
+*/
