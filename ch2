@@ -1,0 +1,127 @@
+Array ADT
+物件導向三種
+
+Polynomial ADT
+Sparse Matrix ADT
+
+Polynomial ADT
+創造
+0多項式
+觀察
+是否0多項式？
+n次方的係數是？
+最大次方是多少？
+轉換
+插入新項目
+移除項目
+相乘多項式和項目
+兩個多項式加總
+兩個多項式乘積
+p.12
+
+2種類別創造多項式
+實作一
+define MAX_degree 101 /*MAX degree of polynomial+1*/
+typedef struct{
+	int degree;
+	float coef [MAX_degree];
+}polynomial;
+全部次方都儲存係數
+簡單做但費空間
+i就是exp
+f[i]存的是coef
+
+實作二
+只存非零項
+MAX_TERMS 100 /*size of terms array*/
+typedef struct{
+	float coef;
+	int expon;
+}polynomial;
+
+polynomial terms [MAX_TERMS];
+int avail = 0;
+要用上startA;endA;startB;endB
+term[i]
+就包含coef和expon
+i只用做編號
+
+##practice time
+How to use one global array to store all polynomials
+看不懂start finish的作法，可能是數字有錯，看影片
+
+兩種addPoly()
+看不懂差別
+
+attach()
+
+padd()
+
+##practice time
+To compute D(x)=A(x)+B(x) according to their array representations of storing non-zero terms. 
+看兩者加完後的結果
+
+如果沒有多的記憶體，當初給多點
+
+Sparse Matrix ADT
+創建、加減、乘積、轉置
+
+用2D矩陣會是固定記憶體空間
+
+但sparse matrix會費空間
+
+sparse matrix表示法
+List of triplets<row, col, value>
+0th triplet：dimensions, number of non-zero
+
+#define MAX_TERMS 101
+typedef struct{
+	int col;
+	int row;
+	int value;
+}term;
+term a[MAX_TERMS];
+
+##practice time
+Please show  the Sparse Matrix Representation by triplets
+
+轉置
+排成表後做row major
+
+Algo.1
+col的數量*項目的數量
+O(c*n)
+程式碼一
+
+Algo.2
+另外弄個輔助表
+先算每列非零項，再排每項起點
+##practice time
+Please show row_terms[i] and starting_row_position[i] for the matrix 
+Please show the Sparse Matrix Representation by triplets after matrix transposition
+
+程式碼二
+O(c)+O(n)
+
+Sparse Matrix Multiplication
+2D乘積
+
+程式碼
+44-49看不懂
+
+practice time
+
+
+mmult
+看不懂
+
+「用一個全域陣列存多個多項式」的做法（startA、endA、startB、endB）不清楚。
+　→ 不確定怎麼運作
+
+「兩種 addPoly() 實作差別」不明白（可能是指逐項比較法 vs. 呼叫 attach() 的版本）。
+
+attach()、padd() 函式的具體用途和流程不清楚（何時新增項、何時結束）。
+
+Sparse Matrix Multiplication：程式碼 44–49 的部分不理解（通常是雙層或三層迴圈的核心乘法邏輯）。
+
+mmult 函式整體流程不清楚，特別是如何匹配 a 的列與 b 的行來生成新項。
